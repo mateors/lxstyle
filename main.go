@@ -30,6 +30,7 @@ func htmlNode(htmlFilePath string) error {
 	//scan|parse the html document
 	parse_html(doc)
 
+	//where is the style sheet code generated?
 	if len(linkRows) > 0 {
 		styleSheetName = linkRows[0]["href"] //get the first style sheet
 	}
@@ -42,6 +43,8 @@ func htmlNode(htmlFilePath string) error {
 		}
 
 	}
+
+	//generate style sheet code
 	os.MkdirAll(filepath.Dir(styleSheetName), 0755)
 	err = FileCreate(styleSheetName, cssOutput)
 	return err
