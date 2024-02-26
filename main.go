@@ -13,18 +13,18 @@ var classList []string
 var linkRows []map[string]string
 
 // github.com/andybalholm/cascadia
-func htmlNode() {
+func htmlNode(htmlFilePath string) error {
 
 	var styleSheetName string
-	osF, err := os.Open("templates/index.html")
+	osF, err := os.Open(htmlFilePath)
 	if err != nil {
 		log.Println(err)
-		return
+		return err
 	}
 	doc, err := html.Parse(osF)
 	if err != nil {
 		log.Println(err)
-		return
+		return err
 	}
 	//fmt.Println(doc.Attr)
 	parse_html(doc)
@@ -52,11 +52,11 @@ func htmlNode() {
 	// 	return
 	// }
 	// fmt.Println(sel.String())
-
+	return nil
 }
 
 func main() {
 
-	htmlNode()
+	htmlNode("index.html")
 
 }
