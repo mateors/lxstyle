@@ -11,135 +11,6 @@ import (
 	"golang.org/x/net/html"
 )
 
-func FileCreate(name, content string) error {
-	//fh, err := os.OpenFile(name, os.O_RDWR|os.O_CREATE|os.O_TRUNC, 0644)
-	fh, err := os.Create(name)
-	if err != nil {
-		log.Println(err)
-		return err
-	}
-	defer fh.Close()
-	_, err = fh.WriteString(content)
-	if err != nil {
-		log.Println(err)
-		return err
-	}
-	return nil
-}
-
-func tagAttrMap(attrs []html.Attribute) map[string]string {
-	var omap = make(map[string]string)
-	for _, attr := range attrs {
-		omap[attr.Key] = attr.Val
-	}
-	return omap
-}
-
-func parse_html(n *html.Node) {
-
-	if n.Type == html.ElementNode {
-
-		for _, element := range n.Attr {
-			if element.Key == "class" {
-				//fmt.Printf("class: %s\n", element.Val)
-				classList = append(classList, element.Val)
-			} else {
-				//fmt.Println(">", element.Namespace, element.Key, element.Val)
-			}
-		}
-
-		if n.Data == "link" {
-			tmap := tagAttrMap(n.Attr)
-			linkRows = append(linkRows, tmap)
-			//fmt.Println("link=>", n.Data, tmap, tmap["href"])
-		} else {
-			//fmt.Println("=>", n.Data, len(n.Attr))
-		}
-	}
-	for c := n.FirstChild; c != nil; c = c.NextSibling {
-		parse_html(c)
-	}
-}
-
-func templateParser(txtTemplate string, tmap map[string]interface{}) string {
-
-	var tplOutput bytes.Buffer
-	tpl := template.New("parser")
-	tmplt, err := tpl.Parse(txtTemplate)
-	if err != nil {
-		log.Println("templateParserERR", err)
-		return ""
-	}
-	err = tmplt.Execute(&tplOutput, tmap)
-	if err != nil {
-		log.Println("templateExecuteERR", err)
-		return ""
-	}
-	return tplOutput.String()
-}
-
-//d:flex
-func cssOutput(tmap map[string]interface{}) string {
-
-	value, isExist := tmap["value"].(string)
-	if isExist {
-		tmap["value"] = valueReplacer(value)
-	}
-	cssTemplate := ".{{.identifier}}{\n  {{.key}}: {{.value}};\n}"
-	return templateParser(cssTemplate, tmap)
-}
-
-func valueReplacer(value string) string {
-
-	var output string
-	for _, char := range value {
-		if char == '_' {
-			output += strings.Replace(string(char), "_", " ", 1)
-		} else {
-			output += fmt.Sprintf("%c", char)
-		}
-	}
-	return output
-}
-
-func specialCharReplacer(name string) string {
-
-	//bt\:1px_solid_\#e2e2e3
-	var output string
-	for _, char := range name {
-
-		if char == ':' {
-			output += strings.Replace(string(char), ":", "\\:", 1)
-			//fmt.Printf("%c %v\n", char, char)
-		} else if char == '#' {
-			output += strings.Replace(string(char), "#", "\\#", 1)
-
-		} else if char == '.' {
-			output += strings.Replace(string(char), ".", "\\.", 1)
-
-		} else if char == '[' {
-			output += strings.Replace(string(char), "[", "\\[", 1)
-
-		} else if char == ']' {
-			output += strings.Replace(string(char), "]", "\\]", 1)
-
-		} else if char == '%' {
-			output += strings.Replace(string(char), "%", "\\%", 1)
-
-		} else if char == '!' {
-			output += strings.Replace(string(char), "!", "\\!", 1)
-
-		} else {
-			output += fmt.Sprintf("%c", char)
-		}
-		//xlg:translateX_-50%
-		//fmt.Println(output)
-	}
-
-	return output
-
-}
-
 var pMap = map[string]string{
 	"b":           "border", //1
 	"c":           "color",
@@ -209,6 +80,128 @@ var pMap = map[string]string{
 	"content":     "content", //66
 }
 
+func FileCreate(name, content string) error {
+	fh, err := os.Create(name)
+	if err != nil {
+		log.Println(err)
+		return err
+	}
+	defer fh.Close()
+	_, err = fh.WriteString(content)
+	if err != nil {
+		log.Println(err)
+		return err
+	}
+	return nil
+}
+
+func tagAttrMap(attrs []html.Attribute) map[string]string {
+	var omap = make(map[string]string)
+	for _, attr := range attrs {
+		omap[attr.Key] = attr.Val
+	}
+	return omap
+}
+
+func parse_html(n *html.Node) {
+
+	if n.Type == html.ElementNode {
+
+		for _, element := range n.Attr {
+			if element.Key == "class" {
+				//fmt.Printf("class: %s\n", element.Val)
+				classList = append(classList, element.Val)
+			} else {
+				//fmt.Println(">", element.Namespace, element.Key, element.Val)
+			}
+		}
+		if n.Data == "link" {
+			tmap := tagAttrMap(n.Attr)
+			linkRows = append(linkRows, tmap)
+			//fmt.Println("link=>", n.Data, tmap, tmap["href"])
+		}
+	}
+	for c := n.FirstChild; c != nil; c = c.NextSibling {
+		parse_html(c)
+	}
+}
+
+func templateParser(txtTemplate string, tmap map[string]interface{}) string {
+
+	var tplOutput bytes.Buffer
+	tpl := template.New("parser")
+	tmplt, err := tpl.Parse(txtTemplate)
+	if err != nil {
+		log.Println("templateParserERR", err)
+		return ""
+	}
+	err = tmplt.Execute(&tplOutput, tmap)
+	if err != nil {
+		log.Println("templateExecuteERR", err)
+		return ""
+	}
+	return tplOutput.String()
+}
+
+func cssOutput(tmap map[string]interface{}) string {
+
+	value, isExist := tmap["value"].(string)
+	if isExist {
+		tmap["value"] = valueReplacer(value)
+	}
+	cssTemplate := ".{{.identifier}}{\n  {{.key}}: {{.value}};\n}"
+	return templateParser(cssTemplate, tmap)
+}
+
+func valueReplacer(value string) string {
+
+	var output string
+	for _, char := range value {
+		if char == '_' {
+			output += strings.Replace(string(char), "_", " ", 1)
+		} else {
+			output += fmt.Sprintf("%c", char)
+		}
+	}
+	return output
+}
+
+func specialCharReplacer(name string) string {
+
+	//bt\:1px_solid_\#e2e2e3
+	var output string
+	for _, char := range name {
+
+		if char == ':' {
+			output += strings.Replace(string(char), ":", "\\:", 1)
+			//fmt.Printf("%c %v\n", char, char)
+		} else if char == '#' {
+			output += strings.Replace(string(char), "#", "\\#", 1)
+
+		} else if char == '.' {
+			output += strings.Replace(string(char), ".", "\\.", 1)
+
+		} else if char == '[' {
+			output += strings.Replace(string(char), "[", "\\[", 1)
+
+		} else if char == ']' {
+			output += strings.Replace(string(char), "]", "\\]", 1)
+
+		} else if char == '%' {
+			output += strings.Replace(string(char), "%", "\\%", 1)
+
+		} else if char == '!' {
+			output += strings.Replace(string(char), "!", "\\!", 1)
+
+		} else {
+			output += fmt.Sprintf("%c", char)
+		}
+		//xlg:translateX_-50%
+		//fmt.Println(output)
+	}
+	return output
+}
+
 func cssClassParser(singleClassName string) string {
 
 	var key, value string
@@ -225,8 +218,5 @@ func cssClassParser(singleClassName string) string {
 		"key":        pMap[key],
 		"value":      value,
 	}
-	css := cssOutput(tmap)
-	//fmt.Println(css)
-	return css
-
+	return cssOutput(tmap)
 }

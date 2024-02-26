@@ -1,0 +1,12 @@
+.d\:flex{
+  display: flex;
+}
+.b\:1px_solid_blue{
+  border: 1px solid blue;
+}
+.fs\:40px{
+  font-size: 40px;
+}
+.c\:\#abcdef{
+  color: #abcdef;
+}

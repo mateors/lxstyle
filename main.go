@@ -1,9 +1,9 @@
 package main
 
 import (
-	"fmt"
 	"log"
 	"os"
+	"path/filepath"
 	"strings"
 
 	"golang.org/x/net/html"
@@ -12,10 +12,10 @@ import (
 var classList []string
 var linkRows []map[string]string
 
-// github.com/andybalholm/cascadia
 func htmlNode(htmlFilePath string) error {
 
-	var styleSheetName string
+	var styleSheetName, cssOutput string
+
 	osF, err := os.Open(htmlFilePath)
 	if err != nil {
 		log.Println(err)
@@ -26,37 +26,32 @@ func htmlNode(htmlFilePath string) error {
 		log.Println(err)
 		return err
 	}
-	//fmt.Println(doc.Attr)
+
+	//scan|parse the html document
 	parse_html(doc)
-
-	fmt.Println(">>", len(classList))
-	for _, cls := range classList {
-
-		slc := strings.Split(cls, " ")
-		for _, sClass := range slc {
-			fmt.Println(cssClassParser(sClass))
-		}
-
-	}
 
 	if len(linkRows) > 0 {
 		styleSheetName = linkRows[0]["href"] //get the first style sheet
 	}
-	fmt.Println(styleSheetName, len(linkRows))
 
-	//cssClassParser("gap:1.5rem") //gap\:1\.5rem
+	for _, cls := range classList {
 
-	// sel, err := cascadia.Parse("div.invoice-details")
-	// if err != nil {
-	// 	log.Println(err)
-	// 	return
-	// }
-	// fmt.Println(sel.String())
-	return nil
+		slc := strings.Split(cls, " ")
+		for _, sClass := range slc {
+			cssOutput += cssClassParser(sClass) + "\n"
+		}
+
+	}
+	os.MkdirAll(filepath.Dir(styleSheetName), 0755)
+	err = FileCreate(styleSheetName, cssOutput)
+	return err
 }
 
 func main() {
 
-	htmlNode("index.html")
+	err := htmlNode("index.html")
+	if err != nil {
+		log.Println(err)
+	}
 
 }
